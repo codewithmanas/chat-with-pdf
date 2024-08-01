@@ -25,7 +25,7 @@ const FileUploader = () => {
 
     useEffect(() => {
             if(fileId) {
-                router.push(`/dashboard/${fileId}`)
+                router.push(`/dashboard/files/${fileId}`)
 
                 // toast({
                 //     title: "File uploaded successfully",
@@ -57,13 +57,6 @@ const FileUploader = () => {
 
       }, [handleUpload, toast]);
 
-
-    //   const statusIcons = {
-    //     [StatusText.UPLOADING]: <CircleArrowDown className="w-16 h-16" />,
-    //     [StatusText.UPLOADED]: <CheckCircleIcon className="w-16 h-16" />,
-    //     [StatusText.SAVING]: <SaveIcon className="w-16 h-16" />,
-    //     [StatusText.GENERATING]: <HammerIcon className="w-16 h-16" />,
-    //   }
 
     const statusIcons: {
         [key in StatusText]: JSX.Element
