@@ -19,7 +19,7 @@ const FileUploader = () => {
     const { progress, status, fileId, handleUpload } = useUpload();
     const { toast } = useToast();
 
-    console.log("FileUploader", progress, status, fileId);
+    // console.log("FileUploader", progress, status, fileId);
 
     const router = useRouter();
 
