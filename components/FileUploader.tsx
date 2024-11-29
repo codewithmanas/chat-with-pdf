@@ -67,7 +67,7 @@ const FileUploader = () => {
         [StatusText.GENERATING]: <HammerIcon className="h-20 w-20 text-amber-600 animate-bounce" />,
     }
 
-      const { getRootProps, getInputProps, isDragActive, isFocused, isDragAccept } = useDropzone({
+    const { getRootProps, getInputProps, isDragActive, isFocused, isDragAccept } = useDropzone({
         onDrop,
         maxFiles: 1,
         accept: {
@@ -76,8 +76,6 @@ const FileUploader = () => {
     })
 
     const uploadInProgress = progress != null && progress >= 0 && progress <= 100;
-
-
 
   return (
     <div className="flex flex-col gap-4 items-center max-w-7xl mx-auto">

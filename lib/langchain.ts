@@ -133,6 +133,8 @@ export async function generateEmbeddingsInPineconeVectorStore(docId: string) {
                 }
             );
 
+            console.log("--- Embeddings stored successfully! ---");
+
             return pineconeVectorStore;
         }
 
