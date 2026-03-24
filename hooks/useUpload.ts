@@ -3,6 +3,7 @@
 import { generateEmbeddings } from "@/actions/generateEmbeddings";
 import { db, storage } from "@/firebase";
 import { useUser } from "@clerk/nextjs";
+import { OpenAIEmbeddings } from "@langchain/openai";
 import { doc, setDoc } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { useRouter } from "next/navigation";
@@ -33,7 +34,7 @@ function useUpload() {
 
              const fileIdToUploadTo = uuidv4(); // example: 123e4567-e89b-12d3-a456-426655440000
 
-             const storageRef = ref(storage, `users/${user.id}/files/${fileIdToUploadTo}`);
+             const storageRef = ref(storage, `chatpdf_users/${user.id}/files/${fileIdToUploadTo}`);
 
              const uploadTask = uploadBytesResumable(storageRef, file);
 
@@ -51,7 +52,7 @@ function useUpload() {
 
                 setStatus(StatusText.SAVING);
 
-                await setDoc(doc(db, "users", user.id, "files", fileIdToUploadTo), {
+                await setDoc(doc(db, "chatpdf_users", user.id, "files", fileIdToUploadTo), {
                     name: file.name,
                     size: file.size,
                     type: file.type,
