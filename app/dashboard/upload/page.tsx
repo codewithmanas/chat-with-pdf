@@ -1,13 +1,12 @@
-import FileUploader from '@/components/FileUploader'
-import React from 'react'
+import FileUploader from "@/components/FileUploader";
+import React from "react";
 
 const UploadPage = () => {
   return (
     <div>
-
-        <FileUploader />
+      <FileUploader />
     </div>
-  )
-}
+  );
+};
 
-export default UploadPage
+export default UploadPage;

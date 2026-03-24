@@ -14,128 +14,125 @@ import { Index, RecordMetadata } from "@pinecone-database/pinecone";
 import { adminDb } from "@/firebaseAdmin";
 import { auth } from "@clerk/nextjs/server";
 
-
-
 // Initialize the OpenAI model with API key and model name
 const model = new ChatOpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-    modelName: "gpt-4o-mini",
-})
+  apiKey: process.env.OPENAI_API_KEY,
+  modelName: "gpt-4o-mini",
+});
 
-export const indexName = "codewithmanas"; 
-
+export const indexName = "codewithmanas";
 
 export async function generateDocs(docId: string) {
-    const { userId } = await auth();
+  const { userId } = await auth();
 
-    if(!userId) {
-        throw new Error("User not found");
-    }
+  if (!userId) {
+    throw new Error("User not found");
+  }
 
-    console.log("--- Fetching the download URL from Firebase... ---");
+  console.log("--- Fetching the download URL from Firebase... ---");
 
-    const firebaseRef = await adminDb
-        .collection("users")
-        .doc(userId)
-        .collection("files")
-        .doc(docId)
-        .get();
+  const firebaseRef = await adminDb
+    .collection("users")
+    .doc(userId)
+    .collection("files")
+    .doc(docId)
+    .get();
 
-    
-    const downloadUrl = firebaseRef.data()?.downloadUrl;
-    
-    if(!downloadUrl) {
-        throw new Error("Download URL not found");
-    }
+  const downloadUrl = firebaseRef.data()?.downloadUrl;
 
-    console.log(`--- Download URL fetched successfully: ${downloadUrl} ---`);
+  if (!downloadUrl) {
+    throw new Error("Download URL not found");
+  }
 
+  console.log(`--- Download URL fetched successfully: ${downloadUrl} ---`);
 
-    // Fetch the PDF from the specified URL
-    const response = await fetch(downloadUrl);
-    
-    // Load the PDF into a PDFDocument object
-    const data = await response.blob(); 
+  // Fetch the PDF from the specified URL
+  const response = await fetch(downloadUrl);
 
-    // Load the PDF document from the specified path
-    console.log("--- Loading the PDF document... ---");
+  // Load the PDF into a PDFDocument object
+  const data = await response.blob();
 
-    const loader = new PDFLoader(data);
-    const docs = await loader.load();
+  // Load the PDF document from the specified path
+  console.log("--- Loading the PDF document... ---");
 
-    // Split the loaded document into smaller parts for easier processing
-    console.log("--- Splitting the document into smaller parts... ---");
+  const loader = new PDFLoader(data);
+  const docs = await loader.load();
 
-    const splitter = new RecursiveCharacterTextSplitter();
-    // {
-    //     chunkSize: 1000,
-    //     chunkOverlap: 200,
-    // }
+  // Split the loaded document into smaller parts for easier processing
+  console.log("--- Splitting the document into smaller parts... ---");
 
-    const splitDocs = await splitter.splitDocuments(docs);
+  const splitter = new RecursiveCharacterTextSplitter();
+  // {
+  //     chunkSize: 1000,
+  //     chunkOverlap: 200,
+  // }
 
-    console.log(`--- Split into ${splitDocs.length} parts... ---`);
+  const splitDocs = await splitter.splitDocuments(docs);
 
-    return splitDocs;
+  console.log(`--- Split into ${splitDocs.length} parts... ---`);
 
+  return splitDocs;
 }
 
+async function namespaceExists(
+  index: Index<RecordMetadata>,
+  namespace: string,
+) {
+  if (namespace === null) throw new Error("No Namespace value provided.");
 
-
-async function namespaceExists(index: Index<RecordMetadata>, namespace: string) {
-        if (namespace === null) throw new Error("No Namespace value provided.");
-
-        const { namespaces } = await index.describeIndexStats();
-        return namespaces?.[namespace] !== undefined;
+  const { namespaces } = await index.describeIndexStats();
+  return namespaces?.[namespace] !== undefined;
 }
-
 
 export async function generateEmbeddingsInPineconeVectorStore(docId: string) {
-        const { userId } = await auth();
+  const { userId } = await auth();
 
-        if (!userId) {
-            throw new Error("User not found");
-        }
+  if (!userId) {
+    throw new Error("User not found");
+  }
 
-        let pineconeVectorStore;
+  let pineconeVectorStore;
 
-        // Generate embeddings (numerical representations) for the split documents
-        console.log("--- Generating embeddings... ---");
+  // Generate embeddings (numerical representations) for the split documents
+  console.log("--- Generating embeddings... ---");
 
-        const embeddings = new OpenAIEmbeddings();
+  const embeddings = new OpenAIEmbeddings();
 
-        const index = await pineconeClient.Index(indexName);
+  const index = await pineconeClient.Index(indexName);
 
-        const namespaceAlreadyExists = await namespaceExists(index, docId);
+  const namespaceAlreadyExists = await namespaceExists(index, docId);
 
-        if (namespaceAlreadyExists) {
-            console.log(`--- Namespace ${docId} already exists, reusing existing embeddings... ---`);
+  if (namespaceAlreadyExists) {
+    console.log(
+      `--- Namespace ${docId} already exists, reusing existing embeddings... ---`,
+    );
 
-            pineconeVectorStore = await PineconeStore.fromExistingIndex(embeddings, {
-                pineconeIndex: index,
-                namespace: docId,
-            })
+    pineconeVectorStore = await PineconeStore.fromExistingIndex(embeddings, {
+      pineconeIndex: index,
+      namespace: docId,
+    });
 
-            return pineconeVectorStore;
-        } else {
-            // if the namespace doesn't exist, download the PDF from firestore via the stored Download URL and generate the embeddings and store them in the Pinecone vector store
+    return pineconeVectorStore;
+  } else {
+    // if the namespace doesn't exist, download the PDF from firestore via the stored Download URL and generate the embeddings and store them in the Pinecone vector store
 
-            const splitDocs = await generateDocs(docId);
+    const splitDocs = await generateDocs(docId);
 
-            console.log(`--- Storing the embeddings in namespace ${docId} in the ${indexName} Pinecone vector store... ---`);
+    console.log(
+      `--- Storing the embeddings in namespace ${docId} in the ${indexName} Pinecone vector store... ---`,
+    );
 
-            pineconeVectorStore = await PineconeStore.fromDocuments(
-                splitDocs, 
-                embeddings, 
-                {
-                    pineconeIndex: index,
-                    namespace: docId,
-                }
-            );
+    pineconeVectorStore = await PineconeStore.fromDocuments(
+      splitDocs,
+      embeddings,
+      {
+        pineconeIndex: index,
+        namespace: docId,
+      },
+    );
 
-            console.log("--- Embeddings stored successfully! ---");
+    console.log("--- Embeddings stored successfully! ---");
 
-            return pineconeVectorStore;
-        }
-
+    return pineconeVectorStore;
+  }
 }
