@@ -11,68 +11,76 @@ import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 export enum StatusText {
-    UPLOADING = "Uploading file...",
-    UPLOADED = "File uploaded successfully",
-    SAVING = "Saving file to database...",
-    GENERATING = "Generating AI Embeddings, This will only take a few seconds...",
+  UPLOADING = "Uploading file...",
+  UPLOADED = "File uploaded successfully",
+  SAVING = "Saving file to database...",
+  GENERATING = "Generating AI Embeddings, This will only take a few seconds...",
 }
 
-export type Status = StatusText[keyof StatusText]
-
+export type Status = StatusText[keyof StatusText];
 
 function useUpload() {
-    const [progress, setProgress] = useState<number | null>(null);
-    const [fileId, setFileId] = useState<string | null>(null);
-    const [status, setStatus] = useState<Status | null>(null);
-    const { user } = useUser();
-    const router = useRouter();
+  const [progress, setProgress] = useState<number | null>(null);
+  const [fileId, setFileId] = useState<string | null>(null);
+  const [status, setStatus] = useState<Status | null>(null);
+  const { user } = useUser();
+  const router = useRouter();
 
-    const handleUpload = async (file: File) => {
-             if (!file || !user) return;
-             
-             // TODO: FREE/PRO limitations...
+  const handleUpload = async (file: File) => {
+    if (!file || !user) return;
 
-             const fileIdToUploadTo = uuidv4(); // example: 123e4567-e89b-12d3-a456-426655440000
+    // TODO: FREE/PRO limitations...
 
-             const storageRef = ref(storage, `chatpdf_users/${user.id}/files/${fileIdToUploadTo}`);
+    const fileIdToUploadTo = uuidv4(); // example: 123e4567-e89b-12d3-a456-426655440000
 
-             const uploadTask = uploadBytesResumable(storageRef, file);
+    const storageRef = ref(
+      storage,
+      `chatpdf_users/${user.id}/files/${fileIdToUploadTo}`,
+    );
 
-             uploadTask.on("state_changed", (snapshot) => {
-                 const percent = Math.round(
-                     (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-                 );
-                 setStatus(StatusText.UPLOADING);
-                 setProgress(percent);
-             }, (error) => {
-                 console.error("Error uploading file", error);
-             }, async () => {
-                setStatus(StatusText.UPLOADED);
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref)
+    const uploadTask = uploadBytesResumable(storageRef, file);
 
-                setStatus(StatusText.SAVING);
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        const percent = Math.round(
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
+        );
+        setStatus(StatusText.UPLOADING);
+        setProgress(percent);
+      },
+      (error) => {
+        console.error("Error uploading file", error);
+      },
+      async () => {
+        setStatus(StatusText.UPLOADED);
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
 
-                await setDoc(doc(db, "chatpdf_users", user.id, "files", fileIdToUploadTo), {
-                    name: file.name,
-                    size: file.size,
-                    type: file.type,
-                    downloadUrl: downloadURL,
-                    ref: uploadTask.snapshot.ref.fullPath,
-                    createdAt: new Date(),
-                })
+        setStatus(StatusText.SAVING);
 
-                setStatus(StatusText.GENERATING);
-                // TODO: Generate AI Embeddings...
+        await setDoc(
+          doc(db, "chatpdf_users", user.id, "files", fileIdToUploadTo),
+          {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            downloadUrl: downloadURL,
+            ref: uploadTask.snapshot.ref.fullPath,
+            createdAt: new Date(),
+          },
+        );
 
-                await generateEmbeddings(fileIdToUploadTo);
+        setStatus(StatusText.GENERATING);
+        // TODO: Generate AI Embeddings...
 
-                setFileId(fileIdToUploadTo);
-             }
-        )
-    }
+        await generateEmbeddings(fileIdToUploadTo);
 
-    return { progress, status, fileId, handleUpload }
-  
+        setFileId(fileIdToUploadTo);
+      },
+    );
+  };
+
+  return { progress, status, fileId, handleUpload };
 }
 
-export default useUpload
+export default useUpload;
