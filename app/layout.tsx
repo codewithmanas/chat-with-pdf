@@ -4,7 +4,7 @@ import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/toaster";
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
 });
@@ -12,13 +12,13 @@ const inter = Inter({
 const oldStandardTT = Old_Standard_TT({
   subsets: ["latin"],
   variable: "--font-old-standard-tt",
-  weight: "400"
+  weight: "400",
 });
 
 const merriweather = Merriweather({
   subsets: ["latin"],
   variable: "--font-merriweather",
-  weight: "400"
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -34,7 +34,9 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={`min-h-screen h-screen overflow-hidden flex flex-col ${inter.variable} ${oldStandardTT.variable} ${merriweather.variable}`}>
+        <body
+          className={`min-h-screen h-screen overflow-hidden flex flex-col ${inter.variable} ${oldStandardTT.variable} ${merriweather.variable}`}
+        >
           {children}
           <Toaster />
         </body>

@@ -1,6 +1,6 @@
-import Documents from '@/components/Documents'
-import React from 'react'
-export const dynamic = 'force-dynamic'
+import Documents from "@/components/Documents";
+import React from "react";
+export const dynamic = "force-dynamic";
 
 const DashboardHome = () => {
   return (
@@ -11,7 +11,7 @@ const DashboardHome = () => {
 
       <Documents />
     </div>
-  )
-}
+  );
+};
 
-export default DashboardHome
+export default DashboardHome;
